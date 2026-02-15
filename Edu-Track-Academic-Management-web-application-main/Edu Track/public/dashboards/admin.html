@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Admin Dashboard</title>
+  <link rel="stylesheet" href="admin.css">
+  <style>
+    body { font-family: Arial; margin: 20px; }
+    button { margin: 5px; padding: 8px 16px; cursor: pointer; }
+    #controls { margin-bottom: 20px; }
+    #results table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    #results th, #results td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    .form-section { margin-top: 20px; display: none; }
+    input { margin: 5px; padding: 5px; }
+  </style>
+</head>
+<body>
+  <h2>👩‍💼 Admin Dashboard</h2>
+
+  <div id="controls">
+    <button onclick="viewUsers('student')">👨‍🎓 View Students</button>
+    <button onclick="viewUsers('teacher')">👨‍🏫 View Teachers</button>
+    <button onclick="showAddForm()">➕ Add User</button>
+    <button onclick="showDeleteForm()">🗑️ Delete User</button>
+  </div>
+
+  <!-- Add User Form -->
+  <div id="addForm" class="form-section">
+    <h3>➕ Add User</h3>
+    <select id="addType">
+      <option value="student">Student</option>
+      <option value="teacher">Teacher</option>
+    </select>
+    <input type="text" id="addUsername" placeholder="Username" />
+    <input type="text" id="addPassword" placeholder="Password" />
+    <button onclick="addUser()">Add</button>
+    <div id="addMessage"></div>
+  </div>
+
+  <!-- Delete User Form -->
+  <div id="deleteForm" class="form-section">
+    <h3>🗑️ Delete User</h3>
+    <select id="deleteType">
+      <option value="student">Student</option>
+      <option value="teacher">Teacher</option>
+    </select>
+    <input type="text" id="deleteUsername" placeholder="Username" />
+    <button onclick="deleteUser()">Delete</button>
+    <div id="deleteMessage"></div>
+  </div>
+
+  <!-- View Result Area -->
+  <div id="results"></div>
+
+  <script>
+    function hideForms() {
+      document.getElementById('addForm').style.display = 'none';
+      document.getElementById('deleteForm').style.display = 'none';
+      document.getElementById('addMessage').textContent = '';
+      document.getElementById('deleteMessage').textContent = '';
+    }
+
+    function showAddForm() {
+      hideForms();
+      document.getElementById('addForm').style.display = 'block';
+    }
+
+    function showDeleteForm() {
+      hideForms();
+      document.getElementById('deleteForm').style.display = 'block';
+    }
+
+    async function viewUsers(type) {
+      hideForms();
+      const endpoint = type === 'student' ? '/api/admin/students' : '/api/admin/teachers';
+      const res = await fetch(endpoint);
+      const data = await res.json();
+
+      const tableRows = data.map(user => `
+        <tr><td>${user.username}</td><td>${user.password}</td></tr>
+      `).join('');
+
+      document.getElementById('results').innerHTML = `
+        <h3>📋 ${type === 'student' ? 'Students' : 'Teachers'} List</h3>
+        <table>
+          <tr><th>Username</th><th>Password</th></tr>
+          ${tableRows}
+        </table>
+      `;
+    }
+
+    async function addUser() {
+      const type = document.getElementById('addType').value;
+      const username = document.getElementById('addUsername').value.trim();
+      const password = document.getElementById('addPassword').value.trim();
+
+      if (!username || !password) {
+        document.getElementById('addMessage').textContent = '❌ Please fill in both fields.';
+        return;
+      }
+
+      const existing = await fetch(type === 'student' ? '/api/admin/students' : '/api/admin/teachers');
+      const list = await existing.json();
+      if (list.find(u => u.username === username)) {
+        document.getElementById('addMessage').textContent = '⚠️ Username already exists.';
+        return;
+      }
+
+      const res = await fetch(`/api/admin/${type}s`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+
+      const result = await res.json();
+      document.getElementById('addMessage').textContent = result.message || '✅ User added.';
+      viewUsers(type);
+    }
+
+    async function deleteUser() {
+      const type = document.getElementById('deleteType').value;
+      const username = document.getElementById('deleteUsername').value.trim();
+      if (!username) {
+        document.getElementById('deleteMessage').textContent = '❌ Enter username to delete.';
+        return;
+      }
+
+      const endpoint = type === 'student' ? `/api/students/${username}` : `/api/teachers/${username}`;
+      const res = await fetch(endpoint, { method: 'DELETE' });
+      const result = await res.json();
+      document.getElementById('deleteMessage').textContent = result.message || '✅ Deleted.';
+      viewUsers(type);
+    }
+  </script>
+</body>
+</html>

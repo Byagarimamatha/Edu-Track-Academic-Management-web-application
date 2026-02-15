@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Voting Results</title>
+  <link rel="stylesheet" href="results.css">
+
+</head>
+<body>
+  <h2>Voting Results</h2>
+
+  <label>Select Session:</label>
+  <select id="sessionSelect" onchange="loadResults()"></select>
+
+  <ul id="resultsList"></ul>
+
+  <script>
+    async function loadSessions() {
+      const res = await fetch('/api/vote/sessions');
+      const sessions = await res.json();
+      const select = document.getElementById('sessionSelect');
+      select.innerHTML = '';
+      sessions.forEach(s => {
+        const opt = document.createElement('option');
+        opt.value = s.id;
+        opt.textContent = s.title;
+        select.appendChild(opt);
+      });
+      loadResults();
+    }
+
+    async function loadResults() {
+      const sessionId = document.getElementById('sessionSelect').value;
+      if (!sessionId) return;
+      const res = await fetch(`/api/vote/results/${sessionId}`);
+      const results = await res.json();
+
+      const ul = document.getElementById('resultsList');
+      ul.innerHTML = '';
+      results.forEach(r => {
+        const li = document.createElement('li');
+        li.textContent = `${r.candidate}: ${r.votes} vote(s)`;
+        ul.appendChild(li);
+      });
+    }
+
+    loadSessions();
+  </script>
+</body>
+</html>

@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Teacher Dashboard - Attendance Records</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      padding: 20px;
+    }
+    h2 {
+      text-align: center;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      background: #fff;
+    }
+    th, td {
+      padding: 12px;
+      border: 1px solid #ccc;
+      text-align: center;
+    }
+    th {
+      background-color: #007bff;
+      color: white;
+    }
+    img {
+      height: 80px;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+  <h2>📋 Student Attendance Records</h2>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Face</th>
+        <th>Latitude</th>
+        <th>Longitude</th>
+        <th>QR Token</th>
+        <th>Timestamp</th>
+        <th>✅ Attendance Marked</th> <!-- ✅ New column -->
+      </tr>
+    </thead>
+    <tbody id="recordsTable">
+      <tr><td colspan="6">⏳ Loading attendance data...</td></tr>
+    </tbody>
+  </table>
+
+  <script>
+    async function loadRecords() {
+      const res = await fetch('/get-attendance-records');
+      const data = await res.json();
+
+      const table = document.getElementById('recordsTable');
+      table.innerHTML = ''; // Clear existing
+
+      if (data.length === 0) {
+        table.innerHTML = '<tr><td colspan="6">🚫 No attendance records found.</td></tr>';
+        return;
+      }
+
+      data.forEach(record => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td><img src="${record.imagePath}" alt="Face" /></td>
+          <td>${record.latitude}</td>
+          <td>${record.longitude}</td>
+          <td>${record.qrToken}</td>
+          <td>${record.timestamp}</td>
+          <td>✅ Attendance Marked</td> <!-- ✅ New column value -->
+        `;
+        table.appendChild(row);
+      });
+    }
+
+    loadRecords();
+  </script>
+</body>
+</html>

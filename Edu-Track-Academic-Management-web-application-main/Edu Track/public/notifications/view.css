@@ -1,0 +1,62 @@
+/* Body styling */
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f9fbfc;
+  color: #333;
+  max-width: 600px;
+  margin: 40px auto;
+  padding: 20px;
+}
+
+/* Page title */
+h2 {
+  color: #2c3e50;
+  margin-bottom: 30px;
+  text-align: center;
+}
+
+/* Notifications container */
+#notifications {
+  background-color: #fff;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+  min-height: 100px;
+}
+
+/* Each notification */
+#notifications > div {
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #eee;
+}
+
+#notifications > div:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+/* Notification title */
+#notifications strong {
+  font-size: 1.1rem;
+  color: #2980b9;
+}
+
+/* Notification message */
+#notifications div br + text {
+  margin-top: 5px;
+  display: block;
+  color: #555;
+  line-height: 1.4;
+}
+
+/* No notifications message */
+#notifications:empty::before {
+  content: "📭 No notifications yet.";
+  color: #999;
+  font-style: italic;
+  display: block;
+  text-align: center;
+  padding: 40px 0;
+}

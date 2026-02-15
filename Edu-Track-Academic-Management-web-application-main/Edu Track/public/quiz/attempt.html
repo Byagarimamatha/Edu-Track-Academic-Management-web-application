@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Attempt Quiz</title>
+</head>
+<body>
+  <h2>📝 Attempt a Quiz</h2>
+  <div id="quizSelector"></div>
+  <form id="quizForm"></form>
+  <div id="result"></div>
+
+  <script>
+    const student = localStorage.getItem("studentUser") || "Unknown";
+
+    fetch("/api/quizzes")
+      .then(res => res.json())
+      .then(data => {
+        const selector = document.getElementById("quizSelector");
+        const quizForm = document.getElementById("quizForm");
+
+        if (!data.length) {
+          selector.innerHTML = "⚠️ No quizzes available.";
+          return;
+        }
+
+        // Dropdown for selecting a quiz
+        selector.innerHTML = `
+          <label>Select a quiz: 
+            <select id="quizDropdown">
+              ${data.map((q, i) => `<option value="${i}">${q.title || 'Untitled Quiz'}</option>`).join('')}
+            </select>
+            <button type="button" onclick="loadQuiz()">Load Quiz</button>
+          </label>
+          <hr/>
+        `;
+
+        window.loadQuiz = function () {
+          const index = document.getElementById("quizDropdown").value;
+          localStorage.setItem("currentQuizIndex", index);
+          renderQuiz(data[index]);
+        };
+
+        const savedIndex = localStorage.getItem("currentQuizIndex");
+        if (savedIndex && data[savedIndex]) {
+          renderQuiz(data[savedIndex]);
+        }
+
+        function renderQuiz(quiz) {
+          quizForm.innerHTML = "";
+          quiz.questions.forEach((q, i) => {
+            const opts = q.options.map((opt, idx) => `
+              <label>
+                <input type="radio" name="q${i}" value="${idx}" required> ${opt}
+              </label><br>
+            `).join("");
+
+            quizForm.innerHTML += `<p><strong>${q.question}</strong><br>${opts}</p>`;
+          });
+
+          quizForm.innerHTML += `<button type="submit">Submit</button>`;
+
+          quizForm.onsubmit = e => {
+            e.preventDefault();
+            let score = 0;
+
+            quiz.questions.forEach((q, i) => {
+              const ans = parseInt(quizForm[`q${i}`].value);
+              if (ans === q.answer) score++;
+            });
+
+            document.getElementById("result").innerHTML =
+              `✅ ${student}, you scored <strong>${score}/${quiz.questions.length}</strong>`;
+
+            fetch("/api/scores", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                student,
+                quizTitle: quiz.title,
+                score
+              })
+            });
+          };
+        }
+      })
+      .catch(err => {
+        document.getElementById("quizSelector").innerText = "❌ Failed to load quizzes";
+        console.error(err);
+      });
+  </script>
+</body>
+</html>

@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>👩‍🏫 Teacher Dashboard</title>
+  <link rel="stylesheet" href="teacher.css">
+</head>
+<body>
+  <h1>👩‍🏫 Teacher Dashboard</h1>
+
+  <div class="grid-container">
+    <!-- ======== Voting Section ======== -->
+    <div class="card">
+      <h2>🗳️ CR Voting</h2>
+      <div class="card-content">
+        <button onclick="toggleVotingMenu()">📂 Open Voting Options</button>
+        <div id="votingOptions" class="toggle-menu hidden">
+          <a href="/voting/addCandidates.html" class="button-link">➕ Add Voting Session & Candidates</a>
+          <a href="/voting/results.html" class="button-link">📊 View Voting Results</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======== Attendance Section ======== -->
+    <div class="card">
+      <h2>📋 Attendance Management</h2>
+      <div class="card-content">
+        <a href="/attendance/teacher">
+          <button>📅 Manage Attendance</button>
+        </a>
+      </div>
+    </div>
+
+    <!-- ======== Quiz Creation Section ======== -->
+    <div class="card">
+      <h2>Create a New Quiz</h2>
+      <div class="card-content">
+        <form id="quizForm">
+          <label for="title">Quiz Title:</label><br>
+          <input type="text" id="title" required><br><br>
+
+          <div id="questionContainer"></div>
+          <button type="button" id="addQBtn">➕ Add Question</button><br><br>
+          <button type="submit">✅ Create Quiz</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- ======== Quiz Management Section ======== -->
+    <div class="card">
+      <h2>📄 Manage Quizzes</h2>
+      <div class="card-content">
+        <button onclick="loadQuizDropdown()">🔁 Load Quiz List</button><br><br>
+        <select id="quizDropdown" onchange="displaySelectedQuiz()">
+          <option value="">-- Select a Quiz --</option>
+        </select>
+        <button onclick="deleteQuiz()">🗑️ Delete Selected Quiz</button>
+
+        <div id="selectedQuizDisplay" style="margin-top: 15px;"></div>
+      </div>
+    </div>
+
+    <!-- ======== Student Scores Section ======== -->
+    <div class="card">
+      <h2>📊 Student Scores</h2>
+      <div class="card-content">
+        <button onclick="loadScores()">📥 Load Scores</button>
+        <table border="1" id="scoreTable" style="margin-top:10px">
+          <thead>
+            <tr>
+              <th>Student</th>
+              <th>Quiz</th>
+              <th>Score</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ======== Notifications Section ======== -->
+    <div class="card">
+      <h2>🔔 Manage Notifications</h2>
+      <div class="card-content">
+        <form id="notificationForm">
+          <input type="hidden" id="editingNotifId">
+          <input type="text" id="notifTitle" placeholder="Title" required><br>
+          <textarea id="notifMessage" placeholder="Enter notification message" rows="3" required></textarea><br>
+          <button type="submit" id="notifSubmitBtn">➕ Add Notification</button>
+          <button type="button" onclick="cancelEdit()" id="cancelEditBtn" style="display:none;">❌ Cancel</button>
+        </form>
+
+        <br>
+        <button onclick="loadNotifications()">📋 Load Notifications</button>
+        <div id="notificationList"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      let quizzes = [];
+
+      function toggleVotingMenu() {
+        document.getElementById("votingOptions").classList.toggle("hidden");
+      }
+
+      function addQuestion() {
+        const container = document.getElementById("questionContainer");
+        const index = container.children.length + 1;
+        const div = document.createElement("div");
+        div.innerHTML = `
+          <hr>
+          <strong>Question ${index}</strong><br>
+          <input type="text" placeholder="Enter question" class="questionText" required><br>
+          <input type="text" placeholder="Option 1" class="option" required><br>
+          <input type="text" placeholder="Option 2" class="option" required><br>
+          <input type="text" placeholder="Option 3" class="option" required><br>
+          <input type="text" placeholder="Option 4" class="option" required><br>
+          <label>Correct Answer:
+            <select class="answer" required>
+              <option value="">-- Select Correct Option --</option>
+              <option value="0">Option 1</option>
+              <option value="1">Option 2</option>
+              <option value="2">Option 3</option>
+              <option value="3">Option 4</option>
+            </select>
+          </label>
+          <br><br>
+        `;
+        container.appendChild(div);
+      }
+
+      document.getElementById("addQBtn").addEventListener("click", addQuestion);
+
+      document.getElementById("quizForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const title = document.getElementById("title").value.trim();
+        const container = document.getElementById("questionContainer");
+        const questions = [];
+        const blocks = container.querySelectorAll("div");
+
+        for (const block of blocks) {
+          const qTextInput = block.querySelector(".questionText");
+          const optionInputs = block.querySelectorAll(".option");
+          const answerSelect = block.querySelector(".answer");
+
+          if (!qTextInput || optionInputs.length !== 4 || !answerSelect) {
+            alert("❌ Something went wrong finding fields.");
+            return;
+          }
+
+          const qText = qTextInput.value.trim();
+          const opts = Array.from(optionInputs).map(opt => opt.value.trim());
+          const answer = parseInt(answerSelect.value);
+
+          if (!qText || opts.some(opt => opt === "") || isNaN(answer)) {
+            alert("❌ Fill all question fields.");
+            return;
+          }
+
+          questions.push({ question: qText, options: opts, answer });
+        }
+
+        const res = await fetch("/api/quizzes", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ title, questions }),
+        });
+
+        const result = await res.json();
+        alert(result.message || "✅ Quiz created!");
+        document.getElementById("quizForm").reset();
+        document.getElementById("questionContainer").innerHTML = "";
+      });
+
+      async function loadQuizDropdown() {
+        const res = await fetch("/api/quizzes");
+        quizzes = await res.json();
+        const dropdown = document.getElementById("quizDropdown");
+        dropdown.innerHTML = '<option value="">-- Select a Quiz --</option>';
+        quizzes.forEach((quiz, index) => {
+          const opt = document.createElement("option");
+          opt.value = index;
+          opt.textContent = quiz.title;
+          dropdown.appendChild(opt);
+        });
+      }
+
+      function displaySelectedQuiz() {
+        const index = document.getElementById("quizDropdown").value;
+        const display = document.getElementById("selectedQuizDisplay");
+        if (index === "") {
+          display.innerHTML = "";
+          return;
+        }
+        const quiz = quizzes[index];
+        if (!quiz) {
+          display.innerHTML = "❌ Quiz not found.";
+          return;
+        }
+        let html = `<h4>${quiz.title}</h4>`;
+        quiz.questions.forEach((q, i) => {
+          html += `<strong>Q${i + 1}: ${q.question}</strong><br>`;
+          q.options.forEach(opt => html += `- ${opt}<br>`);
+          html += `<em>Answer: ${q.options[q.answer]}</em><br><br>`;
+        });
+        display.innerHTML = html;
+      }
+
+      async function deleteQuiz() {
+        const index = document.getElementById("quizDropdown").value;
+        if (index === "") return alert("❌ Select a quiz to delete.");
+        if (!confirm("Are you sure you want to delete this quiz?")) return;
+
+        const res = await fetch("/api/quizzes");
+        const allQuizzes = await res.json();
+        allQuizzes.splice(index, 1);
+
+        await fetch("/api/quizzes", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(allQuizzes)
+        });
+
+        alert("🗑️ Quiz deleted.");
+        loadQuizDropdown();
+        document.getElementById("selectedQuizDisplay").innerHTML = "";
+      }
+
+      async function loadScores() {
+        const res = await fetch("/api/scores");
+        const scores = await res.json();
+        const tbody = document.querySelector("#scoreTable tbody");
+        tbody.innerHTML = "";
+        scores.forEach(score => {
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td>${score.student}</td>
+            <td>${score.quizTitle}</td>
+            <td>${score.score}</td>
+          `;
+          tbody.appendChild(row);
+        });
+      }
+
+      document.getElementById("notificationForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const id = document.getElementById("editingNotifId").value;
+        const title = document.getElementById("notifTitle").value.trim();
+        const message = document.getElementById("notifMessage").value.trim();
+        if (!title || !message) {
+          alert("❌ Fill title and message.");
+          return;
+        }
+        const payload = { title, message };
+        const isEditing = !!id;
+
+        const res = await fetch(`/api/notifications${isEditing ? `/${id}` : ""}`, {
+          method: isEditing ? "PUT" : "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+
+        const result = await res.json();
+        alert(result.message || (isEditing ? "✅ Updated!" : "✅ Notification added"));
+
+        document.getElementById("notificationForm").reset();
+        document.getElementById("editingNotifId").value = "";
+        document.getElementById("notifSubmitBtn").textContent = "➕ Add Notification";
+        document.getElementById("cancelEditBtn").style.display = "none";
+        loadNotifications();
+      });
+
+      async function loadNotifications() {
+        const res = await fetch("/api/notifications");
+        const data = await res.json();
+        const container = document.getElementById("notificationList");
+        container.innerHTML = "";
+
+        if (data.length === 0) {
+          container.innerHTML = "<em>📭 No notifications yet.</em>";
+          return;
+        }
+
+        data.forEach(n => {
+          const div = document.createElement("div");
+          div.innerHTML = `
+            <strong>${n.title}</strong><br>${n.message}<br>
+            <button 
+              class="editBtn"
+              data-id="${n.id}"
+              data-title="${encodeURIComponent(n.title)}"
+              data-message="${encodeURIComponent(n.message)}"
+            >✏️ Edit</button>
+            <button onclick="deleteNotification(${n.id})">🗑️ Delete</button>
+            <hr>
+          `;
+          container.appendChild(div);
+        });
+
+        document.querySelectorAll(".editBtn").forEach(btn => {
+          btn.addEventListener("click", () => {
+            const id = btn.getAttribute("data-id");
+            const title = decodeURIComponent(btn.getAttribute("data-title"));
+            const message = decodeURIComponent(btn.getAttribute("data-message"));
+            editNotification(id, title, message);
+          });
+        });
+      }
+
+      async function deleteNotification(id) {
+        if (!confirm("Delete this notification?")) return;
+
+        const res = await fetch(`/api/notifications/${id}`, { method: "DELETE" });
+        const result = await res.json();
+        alert(result.message);
+        loadNotifications();
+      }
+
+      function editNotification(id, title, message) {
+        document.getElementById("editingNotifId").value = id;
+        document.getElementById("notifTitle").value = title;
+        document.getElementById("notifMessage").value = message;
+        document.getElementById("notifSubmitBtn").textContent = "💾 Update Notification";
+        document.getElementById("cancelEditBtn").style.display = "inline";
+      }
+
+      function cancelEdit() {
+        document.getElementById("notificationForm").reset();
+        document.getElementById("editingNotifId").value = "";
+        document.getElementById("notifSubmitBtn").textContent = "➕ Add Notification";
+        document.getElementById("cancelEditBtn").style.display = "none";
+      }
+
+      window.toggleVotingMenu = toggleVotingMenu;
+      window.loadQuizDropdown = loadQuizDropdown;
+      window.displaySelectedQuiz = displaySelectedQuiz;
+      window.deleteQuiz = deleteQuiz;
+      window.loadScores = loadScores;
+      window.loadNotifications = loadNotifications;
+      window.cancelEdit = cancelEdit;
+      window.deleteNotification = deleteNotification;
+
+      loadNotifications();
+    });
+  </script>
+</body>
+</html>

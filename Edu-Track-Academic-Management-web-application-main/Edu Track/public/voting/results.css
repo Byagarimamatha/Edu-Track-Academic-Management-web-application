@@ -1,0 +1,65 @@
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #e6f0fa; /* Light blue tint */
+  color: #333;
+  padding: 40px;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+h2 {
+  color: #34495e;
+  margin-bottom: 25px;
+  text-align: center;
+}
+
+label {
+  font-weight: 600;
+  font-size: 16px;
+  display: block;
+  margin-bottom: 10px;
+}
+
+select {
+  width: 100%;
+  padding: 10px;
+  font-size: 16px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  margin-bottom: 30px;
+  box-sizing: border-box;
+  background-color: #fff;
+}
+
+#resultsList {
+  list-style-type: none;
+  padding-left: 0;
+  border-top: 1px solid #ddd;
+  border-radius: 6px;
+  background-color: #fff;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+}
+
+#resultsList li {
+  padding: 15px 20px;
+  border-bottom: 1px solid #eee;
+  font-size: 16px;
+  color: #2c3e50;
+}
+
+#resultsList li:last-child {
+  border-bottom: none;
+}
+
+@media (max-width: 600px) {
+  body {
+    padding: 20px;
+  }
+  select {
+    font-size: 14px;
+  }
+  #resultsList li {
+    font-size: 14px;
+    padding: 12px 15px;
+  }
+}

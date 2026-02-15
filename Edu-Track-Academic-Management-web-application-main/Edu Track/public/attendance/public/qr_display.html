@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Live QR Code Generator</title>
+  <style>
+    body { text-align: center; font-family: Arial; padding: 30px; }
+    canvas { margin: 20px; }
+    h2 { margin-bottom: 0; }
+  </style>
+</head>
+<body>
+  <h2>LIVE QR (Student must scan this)</h2>
+  <p>This QR will update every 45 seconds</p>
+  <canvas id="qrcode"></canvas>
+  <p id="qrValue" style="font-weight:bold;"></p>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+  <script>
+    const qr = new QRious({
+      element: document.getElementById('qrcode'),
+      size: 200
+    });
+
+    function generateToken() {
+      return Math.random().toString(36).substring(2, 10);
+    }
+
+    function updateQR() {
+      const token = generateToken();
+      qr.value = token;
+      document.getElementById('qrValue').innerText = "Token: " + token;
+
+      fetch('/update-qr', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token })
+      });
+    }
+
+    setInterval(updateQR, 45000); // 45 seconds
+    updateQR(); // Initial run
+  </script>
+</body>
+</html>

@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Add Notification</title>
+</head>
+<body>
+  <h2>📢 Add Notification</h2>
+
+  <label>Title:</label><br />
+  <input type="text" id="title" placeholder="Enter title" /><br /><br />
+
+  <label>Message:</label><br />
+  <textarea id="message" rows="3" placeholder="Enter message"></textarea><br /><br />
+
+  <button onclick="saveNotification()">✅ Save</button>
+  <div id="status"></div>
+
+  <h3>📋 Previous Notifications</h3>
+  <div id="notificationList"></div>
+
+  <script>
+    async function saveNotification() {
+      const title = document.getElementById('title').value.trim();
+      const message = document.getElementById('message').value.trim();
+      const statusDiv = document.getElementById('status');
+
+      if (!title || !message) {
+        statusDiv.textContent = "❌ Title and message are required.";
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/notifications', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title, message })
+        });
+
+        const data = await res.json();
+        if (res.ok) {
+          statusDiv.textContent = '✅ Saved!';
+          document.getElementById('title').value = '';
+          document.getElementById('message').value = '';
+          fetchNotifications();
+        } else {
+          statusDiv.textContent = '❌ ' + (data.error || 'Failed to save');
+        }
+      } catch (e) {
+        console.error(e);
+        statusDiv.textContent = '❌ Error saving notification';
+      }
+    }
+
+    async function fetchNotifications() {
+      const container = document.getElementById('notificationList');
+      container.innerHTML = 'Loading...';
+      try {
+        const res = await fetch('/api/notifications');
+        const list = await res.json();
+        container.innerHTML = '';
+
+        list.forEach(n => {
+          const div = document.createElement('div');
+          div.innerHTML = `
+            <strong>${n.title}</strong><br/>
+            ${n.message}<br/>
+            <button onclick="editNotification(${n.id})">✏️ Edit</button>
+            <button onclick="deleteNotification(${n.id})">🗑️ Delete</button>
+            <hr/>
+          `;
+          container.appendChild(div);
+        });
+      } catch (e) {
+        container.innerHTML = '❌ Error loading notifications';
+      }
+    }
+
+    async function deleteNotification(id) {
+      if (!confirm("Are you sure you want to delete this notification?")) return;
+
+      try {
+        const res = await fetch('/api/notifications/' + id, { method: 'DELETE' });
+        const data = await res.json();
+        fetchNotifications();
+      } catch (e) {
+        console.error(e);
+        alert("❌ Failed to delete");
+      }
+    }
+
+    async function editNotification(id) {
+      const newTitle = prompt("Enter new title:");
+      if (!newTitle) return;
+      const newMessage = prompt("Enter new message:");
+      if (!newMessage) return;
+
+      try {
+        const res = await fetch('/api/notifications/' + id, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title: newTitle, message: newMessage })
+        });
+        fetchNotifications();
+      } catch (e) {
+        console.error(e);
+        alert("❌ Failed to update");
+      }
+    }
+
+    fetchNotifications();
+  </script>
+</body>
+</html>

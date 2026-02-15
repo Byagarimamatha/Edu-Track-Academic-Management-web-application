@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Vote</title>
+  <link rel="stylesheet" href="vote.css">
+
+</head>
+<body>
+  <h2>Vote in a Session</h2>
+
+  <p id="userDisplay"></p>
+
+  <label>Select a Voting Session:</label>
+  <select id="sessionSelect" onchange="loadCandidates()"></select>
+
+  <br><br>
+
+  <label>Select a Candidate:</label>
+  <select id="candidateSelect"></select>
+
+  <br><br>
+  <button onclick="submitVote()">🗳️ Submit Vote</button>
+
+  <h3 id="status"></h3>
+
+  <script>
+    const studentUsername = localStorage.getItem('loggedInStudent');
+
+    if (!studentUsername) {
+      alert("❌ Not logged in! Redirecting...");
+      window.location.href = "/login/student-login.html"; // redirect to login
+    }
+
+    document.getElementById('userDisplay').innerText = `Logged in as: ${studentUsername}`;
+
+    async function loadSessions() {
+      try {
+        const res = await fetch('/api/vote/sessions');
+        const sessions = await res.json();
+        const sessionSelect = document.getElementById('sessionSelect');
+        sessionSelect.innerHTML = '';
+        sessions.forEach(s => {
+          const opt = document.createElement('option');
+          opt.value = s.id;
+          opt.textContent = s.title;
+          sessionSelect.appendChild(opt);
+        });
+        loadCandidates();
+      } catch (err) {
+        document.getElementById('status').innerText = "❌ Failed to load sessions.";
+      }
+    }
+
+    async function loadCandidates() {
+      const sessionId = document.getElementById('sessionSelect').value;
+      if (!sessionId) return;
+      const res = await fetch(`/api/vote/candidates/${sessionId}`);
+      const candidates = await res.json();
+      const candidateSelect = document.getElementById('candidateSelect');
+      candidateSelect.innerHTML = '';
+      candidates.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c.id;
+        opt.textContent = c.name;
+        candidateSelect.appendChild(opt);
+      });
+    }
+
+    async function submitVote() {
+      const sessionId = document.getElementById('sessionSelect').value;
+      const candidateId = document.getElementById('candidateSelect').value;
+
+      if (!candidateId || !sessionId) {
+        document.getElementById('status').innerText = '❌ Select session and candidate first';
+        return;
+      }
+
+      const res = await fetch('/api/vote/vote', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ studentUsername, sessionId, candidateId })
+      });
+
+      const data = await res.json();
+      document.getElementById('status').innerText = data.message;
+    }
+
+    loadSessions();
+  </script>
+</body>
+</html>

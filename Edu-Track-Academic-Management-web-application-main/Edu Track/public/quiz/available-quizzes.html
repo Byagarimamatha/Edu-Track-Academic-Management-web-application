@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>🧠 Available Quizzes</title>
+</head>
+<body>
+  <h1>🧠 Available Quizzes</h1>
+  <div id="quizList"></div>
+  <div id="quizContainer" style="margin-top: 20px;"></div>
+
+  <script>
+    let quizzesGlobal = [];
+
+    fetch("http://localhost:3000/api/quizzes")
+      .then(response => response.json())
+      .then(quizzes => {
+        quizzesGlobal = quizzes; // ✅ Store globally
+        const quizList = document.getElementById("quizList");
+
+        quizzes.forEach((quiz, index) => {
+          const quizDiv = document.createElement("div");
+          quizDiv.innerHTML = `
+            <h3>📚 ${quiz.title}</h3>
+            <p>${quiz.title}</p>
+            <button onclick="startQuiz(${index})">Attempt Quiz</button>
+            <hr/>
+          `;
+          quizList.appendChild(quizDiv);
+        });
+      });
+
+    function startQuiz(index) {
+      const quiz = quizzesGlobal[index];
+      const container = document.getElementById("quizContainer");
+      let currentQ = 0;
+      let score = 0;
+
+      if (!quiz || !quiz.questions || quiz.questions.length === 0) {
+        container.innerHTML = `<p>❌ No questions found in this quiz.</p>`;
+        return;
+      }
+
+      showQuestion();
+
+      function showQuestion() {
+        const q = quiz.questions[currentQ];
+        container.innerHTML = `
+          <p><strong>Q${currentQ + 1}: ${q.question}</strong></p>
+          ${q.options.map(option => `
+            <label>
+              <input type="radio" name="q" value="${option}" /> ${option}
+            </label><br>
+          `).join("")}
+          <br><button onclick="nextQuestion()">Next</button>
+        `;
+      }
+
+      window.nextQuestion = function () {
+        const selected = document.querySelector("input[name='q']:checked");
+        if (!selected) return alert("Please select an answer");
+
+        if (selected.value === quiz.questions[currentQ].answer) {
+          score++;
+        }
+
+        currentQ++;
+        if (currentQ < quiz.questions.length) {
+          showQuestion();
+        } else {
+          container.innerHTML = `<h3>✅ Quiz Completed!</h3><p>Score: ${score} / ${quiz.questions.length}</p>`;
+        }
+      };
+    }
+  </script>
+</body>
+</html>

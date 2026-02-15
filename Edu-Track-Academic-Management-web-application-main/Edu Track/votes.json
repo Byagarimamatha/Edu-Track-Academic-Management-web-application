@@ -1,0 +1,32 @@
+[
+  {
+    "id": "1750744668048",
+    "sessionId": "1750744585023",
+    "candidateId": "1750744661165",
+    "studentUsername": "student1"
+  },
+  {
+    "id": "1750744787518",
+    "sessionId": "1750744585023",
+    "candidateId": "1750744658449",
+    "studentUsername": "student2"
+  },
+  {
+    "id": "1750744798599",
+    "sessionId": "1750744585023",
+    "candidateId": "1750744661165",
+    "studentUsername": "student3"
+  },
+  {
+    "id": "1750745226685",
+    "sessionId": "1750745106753",
+    "candidateId": "1750745124020",
+    "studentUsername": "student1"
+  },
+  {
+    "id": "1750752031745",
+    "sessionId": "1750752010681",
+    "candidateId": "1750752021677",
+    "studentUsername": "student1"
+  }
+]

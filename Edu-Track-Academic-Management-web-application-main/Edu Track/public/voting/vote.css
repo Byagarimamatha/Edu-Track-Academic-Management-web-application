@@ -1,0 +1,77 @@
+/* General styling */
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f4f8fc;
+  color: #2c3e50;
+  padding: 40px;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+/* Page title */
+h2 {
+  color: #34495e;
+  margin-bottom: 20px;
+}
+
+/* Logged-in user display */
+#userDisplay {
+  margin-bottom: 20px;
+  font-weight: bold;
+  color: #16a085;
+}
+
+/* Labels */
+label {
+  display: block;
+  margin-top: 20px;
+  font-weight: 500;
+  font-size: 16px;
+}
+
+/* Select dropdowns */
+select {
+  width: 100%;
+  padding: 10px;
+  margin-top: 8px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background-color: #fff;
+  box-sizing: border-box;
+}
+
+/* Submit vote button */
+button {
+  margin-top: 30px;
+  padding: 12px 20px;
+  background-color: #3498db;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+button:hover {
+  background-color: #2980b9;
+}
+
+/* Status message */
+#status {
+  margin-top: 30px;
+  font-weight: bold;
+  color: #e67e22;
+}
+
+/* Responsive tweaks */
+@media screen and (max-width: 600px) {
+  body {
+    padding: 20px;
+  }
+
+  select, button {
+    font-size: 15px;
+  }
+}

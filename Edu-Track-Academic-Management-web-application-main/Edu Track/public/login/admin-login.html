@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Admin Login</title>
+  <link rel="stylesheet" href="admin-login.css" />
+</head>
+<body>
+  <div class="container">
+    <h2>Admin Login</h2>
+    <form id="loginForm">
+      <label for="username">Username:</label>
+      <input type="text" id="username" required />
+
+      <label for="password">Password:</label>
+      <input type="password" id="password" required />
+
+      <button type="submit">Login</button>
+    </form>
+  </div>
+
+  <script>
+    document.getElementById("loginForm").addEventListener("submit", function (e) {
+      e.preventDefault();
+
+      const u = document.getElementById("username").value;
+      const p = document.getElementById("password").value;
+
+      if (u === "admin" && p === "admin123") {
+        alert("✅ Login successful");
+        location.href = "../dashboards/admin.html";
+      } else {
+        alert("❌ Invalid credentials");
+      }
+    });
+  </script>
+</body>
+</html>

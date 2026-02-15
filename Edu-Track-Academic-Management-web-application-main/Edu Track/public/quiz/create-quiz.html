@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Create Quiz - EduTrack</title>
+</head>
+<body>
+  <h1>📝 Create a New Quiz</h1>
+  <form id="quizForm">
+    <input type="text" id="title" placeholder="Quiz Title" required /><br><br>
+    <textarea id="questions" placeholder='Enter questions as JSON array' rows="10" cols="50"></textarea><br><br>
+    <button type="submit">Create Quiz</button>
+  </form>
+
+  <script>
+    document.getElementById("quizForm").addEventListener("submit", async function (e) {
+      e.preventDefault();
+      const title = document.getElementById("title").value;
+      const questionsInput = document.getElementById("questions").value;
+      
+      try {
+        const questions = JSON.parse(questionsInput);
+
+        const response = await fetch("/api/quizzes", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ title, questions })
+        });
+
+        const result = await response.json();
+        alert(result.message);
+        document.getElementById("quizForm").reset();
+      } catch (err) {
+        alert("❌ Invalid JSON format for questions!");
+      }
+    });
+  </script>
+</body>
+</html>

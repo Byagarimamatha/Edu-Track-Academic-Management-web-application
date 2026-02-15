@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Student Dashboard</title>
+  <link rel="stylesheet" type="text/css" href="student.css">
+</head>
+<body>
+  <h2>Welcome, <span id="studentName">Student</span>!</h2>
+
+  <!-- Grid container -->
+  <div class="grid-container">
+    <!-- Card: Vote -->
+    <div class="card">
+      <h3>🗳️ Vote</h3>
+      <a href="/voting/vote.html"><button>Go to Vote</button></a>
+    </div>
+
+    <!-- Card: View Results -->
+    <div class="card">
+      <h3>📊 View Results</h3>
+      <a href="/voting/results.html"><button>View Results</button></a>
+    </div>
+
+    <!-- Card: Attendance -->
+    <div class="card">
+      <h3>📋 Attendance</h3>
+      <a href="/attendance/student"><button>📅 View Attendance</button></a>
+    </div>
+
+    <!-- Card: Notifications -->
+    <div class="card">
+      <h3>🔔 Notifications</h3>
+      <a href="/notifications/view.html"><button>View Notifications</button></a>
+    </div>
+
+    <!-- Card: Toggle Quizzes -->
+    <div class="card">
+      <h3>🧠 Quizzes</h3>
+      <button onclick="toggleQuizzes()">Toggle Quiz List</button>
+    </div>
+  </div>
+
+  <!-- Quizzes Section -->
+  <div id="quizList" class="quiz-section" style="display: none;"></div>
+
+  <script>
+    const student = localStorage.getItem("loggedInStudent") || "Student";
+    document.getElementById("studentName").textContent = student;
+
+    async function loadQuizzes() {
+      const res = await fetch("/api/quizzes");
+      const quizzes = await res.json();
+
+      const list = document.getElementById("quizList");
+      list.innerHTML = "<h3>🧠 Available Quizzes</h3>";
+
+      quizzes.forEach((quiz, index) => {
+        const div = document.createElement("div");
+        div.className = "quiz-item";
+        div.innerHTML = `
+          <p>📚 ${quiz.title}</p>
+          <button onclick="attemptQuiz(${index}, '${quiz.title}')">Attempt Quiz</button>
+          <hr/>
+        `;
+        list.appendChild(div);
+      });
+    }
+
+    function attemptQuiz(index, title) {
+      localStorage.setItem("currentQuizIndex", index);
+      localStorage.setItem("currentQuizTitle", title);
+      window.location.href = "/quiz/attempt.html";
+    }
+
+    function toggleQuizzes() {
+      const quizList = document.getElementById("quizList");
+      quizList.style.display = quizList.style.display === "none" ? "block" : "none";
+    }
+
+    loadQuizzes();
+  </script>
+</body>
+</html>

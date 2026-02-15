@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>QR + GPS + Face Attendance</title>
+  <style>
+    video, canvas { display: block; margin: 10px auto; }
+    #submitBtn { padding: 10px 20px; font-size: 18px; }
+    #status { text-align: center; font-weight: bold; margin: 10px; }
+  </style>
+</head>
+<body>
+  <h2 style="text-align:center;">QR + GPS + Face Attendance</h2>
+  <p id="status">⏳ Initializing...</p>
+
+  <video id="video" width="320" height="240" autoplay></video>
+  <canvas id="canvas" width="320" height="240" style="display:none;"></canvas>
+
+  <input type="hidden" id="qrTokenInput" value="">
+  <button id="submitBtn">📸 Capture Face & Submit</button>
+
+  <script>
+    
+    const allowedLat = 17.396860883576753;
+    const allowedLon = 78.4734795673154;
+    const allowedRadius = 5000; // meters — adjust if needed
+
+    // ✅ Function to fetch latest QR token
+    function fetchQRToken() {
+      fetch('/get-latest-qr')
+        .then(res => res.json())
+        .then(data => {
+          document.getElementById('qrTokenInput').value = data.token;
+        });
+    }
+
+    let qrReady = false;
+
+// Fetch QR token from server
+function fetchQRToken() {
+  fetch('/get-latest-qr')
+    .then(res => res.json())
+    .then(data => {
+      document.getElementById('qrTokenInput').value = data.token;
+      qrReady = true;
+    })
+    .catch(() => {
+      qrReady = false;
+      document.getElementById('status').innerText = "❌ Failed to load QR token.";
+    });
+}
+
+// Fetch token right now + every 45 sec
+fetchQRToken();
+setInterval(fetchQRToken, 45000);
+
+    // ✅ Camera access
+    const video = document.getElementById('video');
+    navigator.mediaDevices.getUserMedia({ video: true })
+      .then(stream => video.srcObject = stream)
+      .catch(err => {
+        alert("❌ Camera access denied.");
+        document.getElementById('status').innerText = "❌ Unable to access camera.";
+      });
+
+    // ✅ Submit face + location + QR
+    document.getElementById('submitBtn').addEventListener('click', () => {
+      navigator.geolocation.getCurrentPosition(async (position) => {
+        const lat = position.coords.latitude;
+        const lon = position.coords.longitude;
+
+        const distance = getDistanceFromCollege(lat, lon);
+
+         if (distance > allowedRadius) {
+  document.getElementById("status").innerText = `❌ You are outside the allowed college area.\n📍 Latitude: ${lat.toFixed(5)}, Longitude: ${lon.toFixed(5)}`;
+  return;
+} else {
+  document.getElementById("status").innerText = `✅ You are within campus.\n📍 Latitude: ${lat.toFixed(5)}, Longitude: ${lon.toFixed(5)}`;
+}
+
+        //if (distance > allowedRadius) {
+         // document.getElementById('status').innerText = `❌ You are outside the allowed college area.\n📍 Latitude: ${lat.toFixed(20)}, Longitude: ${lon.toFixed(20)}`;
+  //return;
+
+
+
+        // Capture image from webcam
+        const canvas = document.getElementById('canvas');
+        const context = canvas.getContext('2d');
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const faceData = canvas.toDataURL('image/jpeg');
+
+        if (!faceData || !faceData.includes("base64")) {
+          document.getElementById('status').innerText = "❌ Face not captured properly.";
+          return;
+        }
+
+      const qrToken = document.getElementById('qrTokenInput').value.trim();
+if (!qrReady || !qrToken) {
+  document.getElementById('status').innerText = "❌ QR Token not loaded yet. Please wait a few seconds.";
+  return;
+}
+
+        // Send data to server
+        const res = await fetch('/submit-attendance', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            qrToken,
+            faceData,
+            latitude: lat,
+            longitude: lon
+          })
+        });
+
+        const result = await res.json();
+        document.getElementById('status').innerText = result.message;
+      }, () => {
+        document.getElementById('status').innerText = "❌ Failed to get your location.";
+      });
+    });
+
+    // ✅ GPS distance check using Haversine formula
+    function getDistanceFromCollege(lat1, lon1) {
+      const toRad = deg => deg * Math.PI / 180;
+      const R = 6371e3; // radius of earth in meters
+      const φ1 = toRad(lat1), φ2 = toRad(allowedLat);
+      const Δφ = toRad(allowedLat - lat1);
+      const Δλ = toRad(allowedLon - lon1);
+
+      const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+                Math.cos(φ1) * Math.cos(φ2) *
+                Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+      return R * c;
+    }
+  </script>
+</body>
+</html>

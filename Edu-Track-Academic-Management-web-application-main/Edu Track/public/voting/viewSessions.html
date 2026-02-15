@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>View Voting Sessions</title>
+</head>
+<body>
+  <h2>All Voting Sessions</h2>
+  <ul id="sessionList"></ul>
+
+  <script>
+    async function loadSessions() {
+      const res = await fetch('/api/vote/sessions');
+      const sessions = await res.json();
+      const list = document.getElementById('sessionList');
+      list.innerHTML = '';
+
+      for (const session of sessions) {
+        const li = document.createElement('li');
+        li.innerHTML = `
+          <b>${session.title}</b>
+          <button onclick="viewCandidates('${session.id}')">View Candidates</button>
+          <button onclick="viewResults('${session.id}')">View Results</button>
+          <ul id="details-${session.id}"></ul>
+        `;
+        list.appendChild(li);
+      }
+    }
+
+    async function viewCandidates(sessionId) {
+      const res = await fetch(`/api/vote/candidates/${sessionId}`);
+      const data = await res.json();
+      const details = document.getElementById(`details-${sessionId}`);
+      details.innerHTML = data.map(c => `<li>${c.name} <button onclick="deleteCandidate('${c.id}', '${sessionId}')">❌</button></li>`).join('');
+    }
+
+    async function deleteCandidate(id, sessionId) {
+      await fetch(`/api/vote/delete-candidate/${id}/${sessionId}`, { method: 'DELETE' });
+      viewCandidates(sessionId);
+    }
+
+    async function viewResults(sessionId) {
+      const res = await fetch(`/api/vote/results/${sessionId}`);
+      const results = await res.json();
+      const details = document.getElementById(`details-${sessionId}`);
+      details.innerHTML = results.map(r => `<li>${r.candidate}: ${r.votes} vote(s)</li>`).join('');
+    }
+
+    loadSessions();
+  </script>
+</body>
+</html>
